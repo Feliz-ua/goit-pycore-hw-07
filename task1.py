@@ -23,62 +23,72 @@ class Birthday(Field):
         except ValueError:
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
 
-# Клас для зберігання номера телефону із валідацією (10 цифр)
+# Клас для зберігання номера телефону із перевіркою (10 цифр)
 class Phone(Field):
     def __init__(self, value):
         if not (isinstance(value, str) and value.isdigit() and len(value) == 10):
             raise ValueError("Phone must be a string of 10 digits.")
         super().__init__(value)
         
-# Клас для зберігання інформації про контакт: ім'я, список телефонів та дату народження
+# Клас для зберігання інформації про контакт: ім'я, телефони, дата народження
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
 
+    # Функція додавання номеру телефону до списку телефонів контакту
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
     
+    # Функція додавання дати народження, якщо вона ще не встановлена, інакше викликає помилку
     def add_birthday(self, birthday_str):
         if self.birthday is None:
             self.birthday = Birthday(birthday_str)
         else:
             raise ValueError("Birthday already set for this contact")
         
+    # Функція обчислення кількості днів до наступного дня народження
     def days_to_birthday(self):
         if not self.birthday:
             return None
         today = date.today()
+        # Заміна року на поточний для отримання дати наступного дня народження
         next_birthday = self.birthday.value.replace(year=today.year)
+        # Якщо в цьому році день народження всже минув, додається ще 1 рік (тобто переносимо дату привітання на наступний рік)
         if next_birthday < today:
             next_birthday = next_birthday.replace(year=today.year + 1)
         return (next_birthday - today).days
 
+    # Функція видалення вказаного номеру телефону зі списку, якщо такий номер телефону існує
     def remove_phone(self, phone):
         for p in self.phones:
             if p.value == phone:
                 self.phones.remove(p)
                 break
 
+    # Функція зміни старого номеру телефона на новий
     def edit_phone(self, old_phone, new_phone):
         for i, p in enumerate(self.phones):
             if p.value == old_phone:
                 self.phones[i] = Phone(new_phone)
                 break
 
+    # Функція пошуку номеру телефону у списку телефонів контакту
     def find_phone(self, phone):
         for p in self.phones:
             if p.value == phone:
                 return p
         return None
 
+    # Функція виведення імені та номеру телефону контакту
     def __str__(self):
         phones_str = '; '.join(p.value for p in self.phones)
         return f"Contact name: {self.name.value}, phones: {phones_str}"        
     
-# Клас для зберігання та управління записами
+# Клас для зберігання та управління записами контактів 
 class AddressBook(UserDict):
+
     def add_record(self, record):
         self.data[record.name.value] = record
 
@@ -132,11 +142,18 @@ def input_error(func):
     return inner
 
 def parse_input(user_input):
-    # Розбиваємо рядок введення на команду та аргументи
-    cmd, *args = user_input.split()
-    # Приводимо команду до нижнього регістру для уніфікації
-    cmd = cmd.strip().lower()
-    return cmd, args
+    
+    parts =user_input.strip().split()
+    if not parts:
+        return "", []
+    cmd = parts[0].lower ()
+    
+    if cmd == "change":
+        if len(parts)<4:
+            return cmd, []
+        return cmd, parts[1:4]
+    
+    return cmd, parts[1:] 
 
 @input_error
 def add_contact(args, book):
@@ -153,12 +170,17 @@ def add_contact(args, book):
 
 @input_error
 def change_contact(args, book):
+    # якщо кількість аргументів не дорівнює 3 (ім'я, старий номер телефону, новий номер телефону) - 
+    # буде повідомлення про невірну кількість аргументів для зміни номеру
+    if len (args) !=3:
+        return "Error: 'change' command requires 3 arguments: name, old phone, new phone."
     # Змінюємо номер телефону у існуючого контакту
-    name, phone = args
+    name, old_phone, new_phone = args
     if name not in book:
-        # якщо немає такого контакту - виняток
-        raise KeyError  
-    book[name] = phone
+        # якщо немає такого контакту - помилка
+        raise KeyError ("Contact not found.")
+    record = book [name]
+    record.edit_phone (old_phone, new_phone)
     return "Contact updated."
 
 @input_error
@@ -173,8 +195,10 @@ def show_phone(args, book):
 
 @input_error
 def add_birthday(args, book):
+    # Додаємо дату народження для контакту.
     name, bday = args
     record = book.get(name)
+    # Якщо контакту з таким іменем не існує, видає помилку.
     if not record:
         raise KeyError ("Contact not found")
     record.add_birthday(bday)
@@ -182,16 +206,21 @@ def add_birthday(args, book):
 
 @input_error
 def show_birthday(args, book):
+    # Виводимо дату народження заданого контакту.
     name = args[0]
     record = book.get(name)
+    # Якщо контакт не знайдений — видає помилку.
     if not record:
         raise KeyError("Contact not found")
+    # Якщо дата народження не задана, повертає спеціальне повідомлення.
     if not record.birthday:
         return "Birthday not set for this contact."
     return record.birthday.value.strftime("%d.%m.%Y")
 
 def birthdays (args, book):
+    # Виводить список майбутніх дат народжень (привітань) для всіх контактів за наступний тиждень.
     result = book.get_upcoming_birthdays()
+    # Якщо майбутніх дат за наступний тиждень не буде — повертає відповідне повідомлення.
     if not result:
         return "No upcoming birthdays in the next week."
     return "\n".join([f"{r['name']} congratulation date {r['congratulation_date']}" for r in result])
