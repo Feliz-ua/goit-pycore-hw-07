@@ -21,13 +21,13 @@ class Birthday(Field):
             birthday_date = datetime.strptime(value, "%d.%m.%Y").date()
             super().__init__(birthday_date)
         except ValueError:
-            raise ValueError("Invalid date format. Use DD.MM.YYYY")
+            raise ValueError("Невірний формат дати народження. Використовуйте формат DD.MM.YYYY")
 
 # Клас для зберігання номера телефону із валідацією (10 цифр)
 class Phone(Field):
     def __init__(self, value):
         if not (isinstance(value, str) and value.isdigit() and len(value) == 10):
-            raise ValueError("Phone must be a string of 10 digits.")
+            raise ValueError("Номер телефону повинен складатися з 10 цифр.")
         super().__init__(value)
         
 # Клас для зберігання інформації про контакт: ім'я, список телефонів та дату народження
@@ -44,7 +44,7 @@ class Record:
         if self.birthday is None:
             self.birthday = Birthday(birthday_str)
         else:
-            raise ValueError("Birthday already set for this contact")
+            raise ValueError("День народження вже встановлено для цього контакту")
         
     def days_to_birthday(self):
         if not self.birthday:
@@ -75,7 +75,7 @@ class Record:
 
     def __str__(self):
         phones_str = '; '.join(p.value for p in self.phones)
-        return f"Contact name: {self.name.value}, phones: {phones_str}"        
+        return f"Ім'я абонента: {self.name.value}, телефон: {phones_str}"        
     
 # Клас для зберігання та управління записами
 class AddressBook(UserDict):
@@ -122,13 +122,13 @@ def input_error(func):
             return func(*args, **kwargs)
         # Обробка помилки, коли контакт не знайдено
         except KeyError:
-            return "Contact not found, please check the name."
+            return "Контакт не знайдено, перевірте ім'я."
         # Обробка помилки, коли недостатньо аршументів для імені та телефону
         except ValueError:
-            return "Give me name and phone please."
+            return "Дайте мені ім'я та номер телефону, будь ласка."
         # Обробка помилки, коли відсутнє ім'я для пошуку
         except IndexError:
-            return "Enter user name."
+            return "Введіть ім'я користувача."
     return inner
 
 def parse_input(user_input):
@@ -159,7 +159,7 @@ def change_contact(args, book):
         # якщо немає такого контакту - виняток
         raise KeyError  
     book[name] = phone
-    return "Contact updated."
+    return "Контактна інформація оновлена."
 
 @input_error
 def show_phone(args, book):
@@ -176,25 +176,25 @@ def add_birthday(args, book):
     name, bday = args
     record = book.get(name)
     if not record:
-        raise KeyError ("Contact not found")
+        raise KeyError ("Контакт не знайдено")
     record.add_birthday(bday)
-    return "Birthday added."
+    return "Додано день народження."
 
 @input_error
 def show_birthday(args, book):
     name = args[0]
     record = book.get(name)
     if not record:
-        raise KeyError("Contact not found")
+        raise KeyError("Контакт не знайдено")
     if not record.birthday:
-        return "Birthday not set for this contact."
+        return "День народження для цього контакту не встановлено."
     return record.birthday.value.strftime("%d.%m.%Y")
 
 def birthdays (args, book):
     result = book.get_upcoming_birthdays()
     if not result:
-        return "No upcoming birthdays in the next week."
-    return "\n".join([f"{r['name']} congratulation date {r['congratulation_date']}" for r in result])
+        return "У наступному тижні немає запланованих днів народження."
+    return "\n".join([f"{r['name']} дата привітання {r['congratulation_date']}" for r in result])
 
 
 def show_all(book):
@@ -211,22 +211,22 @@ def main():
     # Основна функція - цикл прийому команд і виклик функцій
     # словник для збереження контактів
     book = AddressBook ()  
-    print("Welcome to the assistant bot!")
+    print("Ласкаво просимо до бота-помічника!")
     while True:
-        user_input = input("Enter a command: ").strip()
+        user_input = input("Введіть команду: ").strip()
         if not user_input:
             # Якщо користувач не ввів команду
-            print("Invalid command.")
+            print("Неправильна команда.")
             continue
         # Обробка введеною команди
         command, args = parse_input(user_input)
 
         # Обробка команд бота
         if command in ["close", "exit"]:
-            print("Good bye!")
+            print("До побачення!")
             break
         elif command == "hello":
-            print("How can I help you?")
+            print("Чим можу допомогти?")
         elif command == "add":
             print(add_contact(args, book))
         elif command == "change":
@@ -242,7 +242,7 @@ def main():
         elif command == "birthdays":
             print(birthdays(args, book))
         else:
-            print("Invalid command.")
+            print("Неправильна команда.")
 
 if __name__ == "__main__":
     main()
