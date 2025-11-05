@@ -166,21 +166,21 @@ def add_contact(args, book):
         record = Record(name)
         record.add_phone(phone)
         book[name] = record
-    return "Contact added."
+    return "Контакт доданий"
 
 @input_error
 def change_contact(args, book):
     # якщо кількість аргументів не дорівнює 3 (ім'я, старий номер телефону, новий номер телефону) - 
     # буде повідомлення про невірну кількість аргументів для зміни номеру
     if len (args) !=3:
-        return "Error: 'change' command requires 3 arguments: name, old phone, new phone."
+        return "Помилка: команда «change» вимагає 3 аргументи: ім'я, старий телефон, новий телефон."
     # Змінюємо номер телефону у існуючого контакту
     name, old_phone, new_phone = args
     if name not in book:
         # якщо немає такого контакту - виняток
         raise KeyError  
     book[name] = phone
-    return "Contact updated."
+    return "Контактна інформація змінена."
 
 @input_error
 def show_phone(args, book):
@@ -210,7 +210,7 @@ def show_birthday(args, book):
     record = book.get(name)
     # Якщо контакт не знайдений — видає помилку.
     if not record:
-        raise KeyError("Contact not found")
+        raise KeyError("Контакт не знайдено")
     if not record.birthday:
         return "День народження для цього контакту не встановлено."
     return record.birthday.value.strftime("%d.%m.%Y")
@@ -227,7 +227,7 @@ def birthdays (args, book):
 def show_all(book):
     # Показуємо всі контакти у списку
     if not book:
-        return "Contact list is empty."
+        return "Контакт не знайдено."
     result = []
     for record in book.values():
         result.append(str(record))
@@ -243,7 +243,7 @@ def main():
         user_input = input("Введіть команду: ").strip()
         if not user_input:
             # Якщо користувач не ввів команду
-            print("Неправильна команда.")
+            print("Невірна команда.")
             continue
         # Обробка введеною команди
         command, args = parse_input(user_input)
@@ -269,7 +269,7 @@ def main():
         elif command == "birthdays":
             print(birthdays(args, book))
         else:
-            print("Неправильна команда.")
+            print("Невірна команда.")
 
 if __name__ == "__main__":
     main()
